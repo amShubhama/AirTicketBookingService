@@ -1,5 +1,5 @@
 const express = require('express');
-const { PORT, DB_SYNC } = require('./config/serverConfig');
+const { PORT, DB_SYNC } = require('./config/server-config');
 const bodyParser = require('body-parser');
 const apiRoutes = require('./routes/index');
 const db = require('./models/index');

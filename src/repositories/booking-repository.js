@@ -1,40 +1,62 @@
 const { StatusCodes } = require('http-status-codes');
-const { Booking } = require('../models/index');
-const { ValidationError, AppError } = require('../utils/errors/index');
+const { Op } = require("sequelize");
 
-class BookingRepository {
-    async create(data) {
-        try {
-            const booking = await Booking.create(data);
-            return booking;
-        } catch (error) {
-            if (error.name == 'SequelizeValidationError') {
-                throw new ValidationError(error);
-            }
-            throw new AppError(
-                'RepositoryError',
-                'Cannot create Booking',
-                'There was an issue creating the booking, please try again later',
-                StatusCodes.INTERNAL_SERVER_ERROR,
-            )
-        }
+const { Booking } = require('../models');
+const CrudRepository = require('./crud-repository');
+const { Enums } = require('../utils/common');
+const { CANCELLED, BOOKED } = Enums.BOOKING_STATUS;
+
+class BookingRepository extends CrudRepository {
+    constructor() {
+        super(Booking);
     }
-    async update(bookingId, data) {
-        try {
-            const booking = await Booking.findByPk(bookingId);
-            if (data.status) {
-                booking.status = data.status;
-            }
-            await booking.save();
-            return booking;
-        } catch (error) {
-            throw new AppError(
-                'RepositoryError',
-                'Cannot update Booking',
-                'There was some issue updating the booking, please try again later',
-                StatusCodes.INTERNAL_SERVER_ERROR
-            );
+
+    async createBooking(data, transaction) {
+        const response = await Booking.create(data, { transaction: transaction });
+        return response;
+    }
+
+    async get(data, transaction) {
+        const response = await Booking.findByPk(data, { transaction: transaction });
+        if (!response) {
+            throw new AppError('Not able to fund the resource', StatusCodes.NOT_FOUND);
         }
+        return response;
+    }
+
+    async update(id, data, transaction) { // data -> {col: value, ....}
+        const response = await Booking.update(data, {
+            where: {
+                id: id
+            }
+        }, { transaction: transaction });
+        return response;
+    }
+
+    async cancelOldBookings(timestamp) {
+        const response = await Booking.update({ status: CANCELLED }, {
+            where: {
+                [Op.and]: [
+                    {
+                        createdAt: {
+                            [Op.lt]: timestamp
+                        }
+                    },
+                    {
+                        status: {
+                            [Op.ne]: BOOKED
+                        }
+                    },
+                    {
+                        status: {
+                            [Op.ne]: CANCELLED
+                        }
+                    }
+                ]
+
+            }
+        });
+        return response;
     }
 }
 
