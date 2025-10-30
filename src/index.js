@@ -1,9 +1,10 @@
 const express = require('express');
-const { PORT, DB_SYNC, REMAINDER_BINDING_KEY } = require('./config/server-config');
+const { PORT, DB_SYNC } = require('./config/server-config');
 const bodyParser = require('body-parser');
 const apiRoutes = require('./routes/index');
 const db = require('./models/index');
 const { Queue } = require('./config/index');
+const CRON = require('./utils/common/cron-jobs');
 const app = express();
 
 
@@ -14,8 +15,8 @@ const setupAndStartServer = async () => {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
 
-    await Queue.createChannel();
-    //await Queue.publishMessage(REMAINDER_BINDING_KEY, "Test Message is published");
+    await Queue.connectQueue();
+    CRON();
 
     //API's for health-check
     app.get('/', (req, res) => {

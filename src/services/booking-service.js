@@ -2,10 +2,11 @@ const axios = require('axios');
 const { StatusCodes } = require('http-status-codes');
 
 const { BookingRepository } = require('../repositories');
-const { ServerConfig } = require('../config')
+const { ServerConfig, Queue } = require('../config')
 const db = require('../models');
 const AppError = require('../utils/errors/app-error');
 const { Enums } = require('../utils/common');
+const { REMAINDER_BINDING_KEY } = require('../config/server-config');
 const { BOOKED, CANCELLED } = Enums.BOOKING_STATUS;
 
 const bookingRepository = new BookingRepository();
@@ -57,7 +58,13 @@ async function makePayment(data) {
         }
         // we assume here that payment is successful
         await bookingRepository.update(data.bookingId, { status: BOOKED }, transaction);
+
         // add message queue
+        Queue.publishMessage(REMAINDER_BINDING_KEY, {
+            service: 'New Booking',
+            data,
+        });
+
         await transaction.commit();
 
     } catch (error) {
