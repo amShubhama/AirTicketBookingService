@@ -1,5 +1,5 @@
 const amqplib = require('amqplib');
-const { MESSAGE_BROKER_URL, EXCHANGE_NAME, } = require('../config/server-config');
+const { MESSAGE_BROKER_URL, EXCHANGE_NAME, } = require('./server-config');
 
 let channel;
 
@@ -32,10 +32,10 @@ const subscribeMessage = async (channel, service, binding_key) => {
     }
 }
 
-const publishMessage = async (binding_key, message) => {
+const publishMessage = async (binding_key, payload) => {
     try {
         await channel.assertQueue('QUEUE_NAME');
-        await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(message));
+        await channel.publish(EXCHANGE_NAME, binding_key, Buffer.from(JSON.stringify(payload)));
     } catch (error) {
         throw error;
     }

@@ -3,7 +3,7 @@ const { PORT, DB_SYNC, REMAINDER_BINDING_KEY } = require('./config/server-config
 const bodyParser = require('body-parser');
 const apiRoutes = require('./routes/index');
 const db = require('./models/index');
-const { Queue } = require('./config');
+const { Queue } = require('./config/index');
 const app = express();
 
 
