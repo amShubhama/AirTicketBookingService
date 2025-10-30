@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    userEmail: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     status: {
       type: DataTypes.ENUM,
       values: [BOOKED, CANCELLED, INITIATED, PENDING],

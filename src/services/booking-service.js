@@ -45,6 +45,7 @@ async function makePayment(data) {
         }
         console.log(bookingDetails);
         const bookingTime = new Date(bookingDetails.createdAt);
+        console.log(bookingTime);
         const currentTime = new Date();
         if (currentTime - bookingTime > 300000) {
             await cancelBooking(data.bookingId);
@@ -60,9 +61,11 @@ async function makePayment(data) {
         await bookingRepository.update(data.bookingId, { status: BOOKED }, transaction);
 
         // add message queue
+        const flight = await axios.get(`${ServerConfig.FLIGHT_SERVICE}/api/v1/flights/${bookingDetails.flightId}`);
         Queue.publishMessage(REMAINDER_BINDING_KEY, {
             service: 'New Booking',
-            data,
+            bookingDetails,
+            flight: flight.data.data,
         });
 
         await transaction.commit();
