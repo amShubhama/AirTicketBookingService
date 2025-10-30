@@ -43,9 +43,7 @@ async function makePayment(data) {
         if (bookingDetails.status == CANCELLED) {
             throw new AppError('The booking has expired', StatusCodes.BAD_REQUEST);
         }
-        console.log(bookingDetails);
         const bookingTime = new Date(bookingDetails.createdAt);
-        console.log(bookingTime);
         const currentTime = new Date();
         if (currentTime - bookingTime > 300000) {
             await cancelBooking(data.bookingId);
@@ -62,10 +60,28 @@ async function makePayment(data) {
 
         // add message queue
         const flight = await axios.get(`${ServerConfig.FLIGHT_SERVICE}/api/v1/flights/${bookingDetails.flightId}`);
+        const flightData = flight.data.data;
+
         Queue.publishMessage(REMAINDER_BINDING_KEY, {
             service: 'New Booking',
-            bookingDetails,
-            flight: flight.data.data,
+            bookingDetails: {
+                bookingId: bookingDetails.id,
+                bookingDate: bookingDetails.updatedAt,
+                userId: bookingDetails.userId,
+                userEmail: bookingDetails.userEmail,
+                status: 'BOOKED',
+                flightId: bookingDetails.flightId,
+                flightNumber: flightData.flightNumber,
+                noOfSeats: bookingDetails.noOfSeats,
+                totalCost: bookingDetails.totalCost,
+                paymentStatus: 'Success',
+                airplaneId: flightData.airplaneId,
+                departureAirportId: flightData.departureAirportId,
+                arrivalAirportId: flightData.arrivalAirportId,
+                arrivalTime: flightData.arrivalTime,
+                departureTime: flightData.departureTime,
+                boardingGate: flightData.boardingGate,
+            }
         });
 
         await transaction.commit();

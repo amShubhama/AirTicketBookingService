@@ -40,6 +40,7 @@ async function makePayment(req, res) {
         const response = await BookingService.makePayment({
             totalCost: req.body.totalCost,
             userId: req.body.userId,
+            userEmail: req.body.userEmail,
             bookingId: req.body.bookingId
         });
         inMemDb[idempotencyKey] = idempotencyKey;
